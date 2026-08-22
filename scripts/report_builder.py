@@ -23,11 +23,29 @@ def link(url, text=None, raw_html=False):
         t = esc(url)
     else:
         t = text if raw_html else esc(text)
-    return f'<a href="{esc(url)}" target="_blank" rel="noopener">{t}</a>'
+    return f'<a href="{esc(url)}" target="_blank" rel="noopener" title="{esc(url)}">{t}</a>'
 
 
 def badge(text, kind="fact"):
     return f'<span class="badge badge-{kind}">{esc(text)}</span>'
+
+
+def chips(terms):
+    """쉼표로 줄줄이 나열하는 대신 스캔하기 쉬운 칩 목록으로."""
+    if not terms:
+        return "<span class='muted'>-</span>"
+    return "".join(f'<span class="chip">{esc(t)}</span>' for t in terms)
+
+
+def evidence_links(urls):
+    """'근거 근거 근거'처럼 텍스트를 반복하는 대신 번호 배지로 — hover 시 URL 툴팁 표시."""
+    if not urls:
+        return ""
+    links = "".join(
+        f'<a href="{esc(u)}" target="_blank" rel="noopener" title="{esc(u)}" class="ev-link">{i}</a>'
+        for i, u in enumerate(urls, 1)
+    )
+    return f'<span class="ev">근거 {links}</span>'
 
 
 def cell_value(v):
@@ -59,20 +77,23 @@ def build_keyword_table(serp_data, axis1, client_domain):
             if own_rank
             else badge("미노출", "danger")
         )
-        own_terms_cell = ", ".join(esc(t) for t in own_terms) if own_terms else "-"
-        comp_terms_cell = ", ".join(esc(t) for t in comp_terms) if comp_terms else "-"
+        own_terms_cell = chips(own_terms)
+        comp_terms_cell = chips(comp_terms)
 
         gap_html = ""
         if gap_terms:
             items = []
             for g in gap_terms:
-                ev = " ".join(link(u, "근거") for u in g.get("evidence", []))
                 cls = "fact" if g.get("type", "fact") == "fact" else "estimate"
                 items.append(
                     f'<li><span class="tag tag-{cls}">{esc(g.get("type","fact"))}</span> '
-                    f'{esc(g.get("term",""))} {ev}</li>'
+                    f'<span class="gap-term">{esc(g.get("term",""))}</span> '
+                    f'{evidence_links(g.get("evidence", []))}</li>'
                 )
-            gap_html = f'<ul class="gap-list">{"".join(items)}</ul>'
+            gap_html = (
+                '<div class="gap-block-title">자사와의 갭</div>'
+                f'<ul class="gap-list">{"".join(items)}</ul>'
+            )
 
         rows.append(
             f"""
@@ -80,7 +101,10 @@ def build_keyword_table(serp_data, axis1, client_domain):
               <td>{esc(kw)}</td>
               <td>{rank_cell}</td>
               <td>{own_terms_cell}</td>
-              <td>{comp_terms_cell}{gap_html}</td>
+              <td>
+                <div class="chip-block">{comp_terms_cell}</div>
+                {gap_html}
+              </td>
             </tr>"""
         )
     return "\n".join(rows)
@@ -105,7 +129,8 @@ def build_axis3_table(axis3):
                 if i < len(row["competitors"]):
                     c = row["competitors"][i]
                     val = cell_value(c.get("value"))
-                    comp_cells.append(f'<td>{link(c["url"], "링크")} {val}</td>')
+                    val = link(c["url"], val, raw_html=True) if c.get("url") else val
+                    comp_cells.append(f"<td>{val}</td>")
                 else:
                     comp_cells.append("<td>-</td>")
             trs.append(
@@ -178,7 +203,7 @@ def main():
   * {{ box-sizing: border-box; }}
   body {{
     background: var(--bg); color: var(--text); font-family: -apple-system, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
-    margin: 0; padding: 24px; line-height: 1.5;
+    margin: 0 auto; max-width: 1360px; padding: 24px; line-height: 1.6; font-size: 15px;
   }}
   header {{
     background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
@@ -193,9 +218,11 @@ def main():
     padding: 20px 24px; margin-bottom: 20px;
   }}
   section h2 {{ margin-top: 0; font-size: 17px; border-left: 4px solid var(--accent); padding-left: 10px; }}
-  table {{ width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }}
-  th, td {{ border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }}
+  table {{ width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px; }}
+  th, td {{ border: 1px solid var(--border); padding: 12px 14px; text-align: left; vertical-align: top; }}
   th {{ background: #1c2334; color: var(--muted); font-weight: 600; }}
+  tbody tr:nth-child(odd) {{ background: rgba(255,255,255,0.015); }}
+  tbody tr:hover {{ background: rgba(255,255,255,0.035); }}
   a {{ color: var(--accent); text-decoration: none; }}
   a:hover {{ text-decoration: underline; }}
   .badge {{ display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }}
@@ -203,10 +230,30 @@ def main():
   .badge-bad {{ background: #3a1414; color: var(--bad); }}
   .badge-danger {{ background: var(--danger-bg); color: var(--danger-fg); border: 1px solid #7a2a35; }}
   .badge-muted {{ background: #262d3f; color: var(--muted); }}
-  .tag {{ display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 11px; margin-right: 4px; }}
+  .tag {{ display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 11px; margin-right: 6px; flex-shrink: 0; }}
   .tag-fact {{ background: #16233d; color: var(--fact); }}
   .tag-estimate {{ background: #3a2c12; color: var(--estimate); }}
-  .gap-list {{ margin: 6px 0 0 0; padding-left: 18px; font-size: 12px; color: var(--muted); }}
+  .chip-block {{ display: flex; flex-wrap: wrap; gap: 6px; }}
+  .chip {{
+    display: inline-block; background: #1c2334; border: 1px solid var(--border);
+    color: var(--text); padding: 3px 10px; border-radius: 12px; font-size: 12px;
+  }}
+  .gap-block-title {{ margin: 14px 0 6px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }}
+  .gap-list {{ margin: 0; padding: 0; list-style: none; font-size: 13px; color: var(--text); }}
+  .gap-list li {{
+    display: flex; align-items: baseline; gap: 6px; padding: 6px 0;
+    border-top: 1px solid var(--border);
+  }}
+  .gap-list li:first-child {{ border-top: none; }}
+  .gap-term {{ flex: 1; }}
+  .ev {{ color: var(--muted); font-size: 11px; white-space: nowrap; }}
+  .ev-link {{
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 16px; height: 16px; margin-left: 3px; border-radius: 50%;
+    background: #1c2334; color: var(--accent) !important; font-size: 10px;
+    text-decoration: none !important;
+  }}
+  .ev-link:hover {{ background: var(--accent); color: #fff !important; }}
   .kw-heading {{ margin: 18px 0 4px; font-size: 14px; color: var(--accent); }}
   .legend {{ font-size: 12px; color: var(--muted); margin-top: 8px; }}
   .muted {{ color: var(--muted); }}
