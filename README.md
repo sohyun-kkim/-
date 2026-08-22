@@ -9,7 +9,7 @@
 [오케스트레이터] 전체 흐름 제어·단계별 재실행
    ├─ ① site-scanner     입력:URL → 출력:keywords.json | 도구:fetch + LLM
    ★ 승인 게이트(사람)    keywords.json 확인·수정 후 재개
-   ├─ ② serp-collector   입력:keywords.json → 출력:serp_results.json | 도구:Serper API(+cache 우선)
+   ├─ ② serp-collector   입력:keywords.json → 출력:serp_results.json | 도구:SerpApi(+cache 우선)
    ├─ ③ content-extractor 입력:serp_results.json → 출력:pages.json | 도구:requests + BeautifulSoup
    ├─ ④ gap-analyzer     입력:pages.json → 출력:analysis.json | 스킬:seo-gap-analysis(축1·3) | 도구:LLM
    └─ ⑤ report-builder   입력:analysis.json → 출력:report.html
@@ -18,7 +18,7 @@
 ## 실행 방법
 
 ```bash
-# 1) .env 에 ANTHROPIC_API_KEY, SERPER_API_KEY 채워넣기 (최초 1회)
+# 1) .env 에 ANTHROPIC_API_KEY, SERPAPI_API_KEY 채워넣기 (최초 1회)
 
 # 2) 키워드 후보 생성 (여기서 반드시 멈춤 — 승인 게이트)
 python3 scripts/orchestrator.py scan https://client-site.com
@@ -46,6 +46,6 @@ python3 scripts/orchestrator.py resume
 ## 오늘 만들지 않은 것 (로드맵)
 
 - Phase 2: 축2(콘텐츠 형식)·축4(정보 깊이), semantic 폴백 매칭, 카테고리 LLM
-  의미정규화, SERP 벤더 다중화(DataForSEO/SerpAPI)
+  의미정규화, SERP 벤더 다중화(DataForSEO/Serper)
 - Phase 3: Playwright headless 렌더링 폴백, 네이버 검색 연동, 클라이언트 제출용
   리포트 모드, GDrive 자동 아카이빙, 시계열 추적·다수 클라이언트 배치 실행

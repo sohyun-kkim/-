@@ -147,7 +147,7 @@ def build_axis1(pages_by_keyword, client_domain):
         )
 
         try:
-            raw = call_llm(system, user, STEP, max_tokens=1200)
+            raw = call_llm(system, user, STEP, max_tokens=3000)
         except Exception as e:
             log(STEP, f"❌ '{keyword}' 축1 LLM 호출 실패, 이 키워드는 건너뜁니다: {e}")
             continue

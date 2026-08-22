@@ -3,7 +3,7 @@
 입력: data/keywords.json (승인 게이트를 통과한 것)
 출력: data/serp_results.json
 
-확정된(selected=true) 키워드 중 최대 3개에 대해 Serper로 상위 5개를 조회한다.
+확정된(selected=true) 키워드 중 최대 3개에 대해 SerpApi로 상위 5개를 조회한다.
 serp_client.fetch_serp()가 cache/serp/{키워드해시}.json을 먼저 조회하므로
 캐시가 있으면 API를 호출하지 않는다.
 """
