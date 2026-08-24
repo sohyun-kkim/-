@@ -10,6 +10,8 @@
    ├─ ① site-scanner     입력:URL → 출력:keywords.json | 도구:fetch + LLM
    ★ 승인 게이트(사람)    keywords.json 확인·수정 후 재개
    ├─ ② serp-collector   입력:keywords.json → 출력:serp_results.json | 도구:SerpApi(+cache 우선)
+   │                     언론/매거진·커뮤니티(UGC) 도메인은 실제 판매 경쟁사가 아니므로 제외
+   │                     (scripts/noncompetitor_domains.py, 제외 내역은 리포트에 표시)
    ├─ ③ content-extractor 입력:serp_results.json → 출력:pages.json | 도구:requests + BeautifulSoup
    ├─ ④ gap-analyzer     입력:pages.json → 출력:analysis.json | 스킬:seo-gap-analysis(축1·3) | 도구:LLM
    └─ ⑤ report-builder   입력:analysis.json → 출력:report.html

@@ -82,6 +82,19 @@ def build_competitor_list(entry, client_domain):
     return "".join(items) if items else "<span class='muted'>SERP 결과 없음</span>"
 
 
+def build_excluded_note(media_excluded):
+    """조용히 버리지 않고 어떤 도메인을 왜 제외했는지 보여준다."""
+    if not media_excluded:
+        return ""
+    label = {"media": "언론/매거진", "ugc": "커뮤니티"}
+    pills = "".join(
+        f'<a href="{esc(e["url"])}" target="_blank" rel="noopener" title="{esc(e["url"])}" '
+        f'class="excl-pill">{e["rank"]}위 {esc(e["domain"])} · {label.get(e["category"], e["category"])}</a>'
+        for e in media_excluded
+    )
+    return f'<div class="excl-note">제외됨 <div class="excl-list">{pills}</div></div>'
+
+
 def build_axis3_mini(rows):
     """키워드 하나에 대한 온페이지 비교표. 열 제목을 '경쟁사 1위'가 아니라 실제 도메인으로."""
     if not rows:
@@ -161,8 +174,9 @@ def build_keyword_card(idx, entry, axis1, axis3_rows, client_domain):
       </div>
 
       <div class="kw-card-block">
-        <div class="block-label">경쟁사 (SERP 상위 5)</div>
+        <div class="block-label">경쟁사 (SERP 상위 5, 언론/매거진·커뮤니티 제외)</div>
         <div class="comp-list">{build_competitor_list(entry, client_domain)}</div>
+        {build_excluded_note(entry.get("media_excluded", []))}
       </div>
 
       <div class="kw-card-grid">
@@ -347,6 +361,14 @@ def main():
     background: var(--accent); color: #fff; border-radius: 5px; padding: 1px 6px;
     font-size: 11px; font-weight: 700;
   }}
+  .excl-note {{ margin-top: 8px; font-size: 11.5px; color: var(--muted); }}
+  .excl-list {{ display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }}
+  .excl-pill {{
+    display: inline-block; padding: 2px 8px; border-radius: 8px; background: #f3f1ec;
+    color: var(--muted) !important; font-size: 11px; text-decoration: none !important;
+    border: 1px dashed var(--border);
+  }}
+  .excl-pill:hover {{ border-color: var(--muted); }}
 
   table {{ width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }}
   th, td {{ border: 1px solid var(--border); padding: 9px 11px; text-align: left; vertical-align: top; }}
